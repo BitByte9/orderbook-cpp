@@ -1,118 +1,101 @@
-#ifndef ORDERBOOK-HPP;
-#define ORDERBOOK-HPP;
-#define ll long long
-
-#include <bits/stdc++.h>;
-#include <string>;
+#include <orderbook.hpp>
+#include <iostream>
+#include <iomanip> // For setw() and setfill()
+#include <algorithm>
 
 using namespace std;
 
+//intialising the static varibale of struct order
+int order::counter_ask=0; 
+int order::counter_bid=0; 
 
-//ticker is the stock we are trading 
-string ticker="GOOGLE";
-
-struct Balances{
-    unordered_map <string,ll> balance; // it store USD: val , "google":val
-    //default constructor to intialize the user holding
-    Balances()
+void OrderBook:: flipBalance(const string& userId1, const string& userId2,double quantity,double price)
+{
+    if(users.find(userId1)!=users.end() && users.find(userId2)!=users.end())
     {
-        balance["USD"]=0;
-        balance[ticker]=0;
-
-
-    }
-    Balances(string market,ll value)
-    {
-        balance[market]=value;
-    }
-    string add_balance(string market, ll value)
-    {
-        //check if market is already present or not
-        if(balance.find(market)!= balance.end())
+        if(users[userId1].user_balance.balance["USD"]>=quantity*price)
         {
-            balance[market]+=value;
-            return "balance added succcesfully";
+            if(users[userId2].user_balance.balance[ticker]>=quantity)
+            {
+                users[userId1].user_balance.balance["USD"]-=quantity*price;
+                users[userId1].user_balance.balance[ticker]+=quantity;
+
+                users[userId2].user_balance.balance[ticker]-=quantity;
+                users[userId2].user_balance.balance["USD"]+=quantity*price;
+                cout<<"funds and stocks are transferred"<<endl;
+
+            }
+            else
+            {
+                cout<<"USer doesnt have enough balance to transfer fund"<<endl;
+            }
+
         }
-        balance[market]=value;
-        return "balance added successfully";
+        else{
+            cout<<"User not have enough balance to buy stocks"<<endl;
+        }
+
     }
+    else{
+        cout<<"One of the two user dont exist"<<endl;
+    }
+}
 
-};
+OrderBook::OrderBook()
+{
+    // Implementation of OrderBook constructor
 
-//store unique user and balances 
-struct Users{
-     string user_name;
-     Balances user_balance;
+    // Creating a couple of market maker users with predefined balances and bids/asks
+    Balances balance1("USD", 10000);
+    balance1.add_balance(ticker, 1000);
+    Users marketMaker1("MarketMaker1", balance1); // User is made
+    users["MarketMaker1"] = marketMaker1;        // Adding bids and asks for market makers
 
-     Users(string name)
-     {
-          user_name=name;
-          user_balance=Balances();
-     }
+    order bid1("MarketMaker1", "bid", 110, 10);
+    order ask1("MarketMaker1", "ask", 115, 5);
+    order bid2("MarketMaker2", "bid", 111, 8);
+    order ask2("MarketMaker2", "ask", 119, 12);
 
+    bids.push_back(bid1);
+    asks.push_back(ask1);
+    bids.push_back(bid2);
+    asks.push_back(ask2);
 
+    // Creating a couple of market maker users with predefined balances and bids/asks, with different balances to start maintaining liquidity in the order book
+    Balances balance2("USD", 10000);
+    balance2.add_balance(ticker, 2000);
+    Users marketMaker2("MarketMaker2", balance2); // User is made
+    users["MarketMaker2"] = marketMaker2;        // Adding bids and asks for market makers
+    order bid3("MarketMaker2", "bid", 109, 10);
+    order ask3("MarketMaker2", "ask", 125, 5);
+    order bid4("MarketMaker2", "bid", 112, 8);
+    order ask4("MarketMaker2", "ask", 120, 12);
 
-};
+    bids.push_back(bid3);
+    asks.push_back(ask3);
+    bids.push_back(bid4);
+    asks.push_back(ask4);
 
-
-struct order{
-     string user_name;
-     string side;
-     ll price;
-     ll quantity;
-
-     static int counter_bid;//static counter to tranck order number
-     static int counter_ask;
-
-     int insertion_bid_id;
-     int insertion_ask_id;
-
-     order(string name,string type,ll pri, ll quan)
-     {
-          user_name=name;
-          side=type;
-          price=pri;
-          quantity=quan;
-
-          if(side=="bid")
-          {
-               insertion_bid_id=counter_bid++;
-          }
-          else{
-               insertion_ask_id=counter_ask++;
-          }
-     }
-
-
-};
-
-class OrderBook{
-private:
-
-    vector<order> bids; // stores all bids in order of price and time --> O(n) lookup
-    vector<order> asks; // stores all asks in order of price and time --> O(n) lookup
-    unordered_map <std :: string,Users> users; // stores unique user name and balances for each user --> O(1) lookup no need to be in order 
-    void flipBalance(const std::string& userId1, const std::string& userId2, double quantity, double price);
-
-    public:
-    OrderBook(); // constructor
-   ~OrderBook(); // destructor 
-    string add_bid(std :: string Username, int Price, int Quantity); // adds a bid or ask to the order book
-    string add_ask(std :: string Username, int Price, int Quantity); // adds a bid or ask to the order book
-    string getBalance(std::string username); // returns the balance of a user
-    string getQuote(int qty); // returns the best bid and ask prices and quantities
-    string getDepth(); // returns the entire order book and shows all bids and asks
-    string makeUser(string); // creates a new user for people trying to join the market
-    string addBalanace(string Username, string market, int value); // adds balance to a user
-    void cancelBid(string Username, int Price, int Quantity); // cancels a bid or ask from the order book
-    void cancelAsk(string Username, int Price, int Quantity); // cancels a bid or ask from the order book
-
-};
+    // Creating user 3 with predefined balances and bids/asks
+    // market maker 3 has a lot of USD and wants to buy GOOGL
+    Balances balance3("USD", 50000);
+    balance3.add_balance(ticker, 0);
+    Users marketMaker3("MarketMaker3", balance3); // User is made
+    users["MarketMaker3"] = marketMaker3;        // Adding bids and asks for market makers
+    order bid5("MarketMaker3", "bid", 105, 10);
+    order bid6("MarketMaker3", "bid", 108, 10);
+    bids.push_back(bid5);
+    bids.push_back(bid6);
+}
 
 
+string OrderBook:: makeUser(string name)
+{
+    Users ob(name);
+    users[name]=ob;
+    cout<<"User: "<<name<<" "<<"created successfully"<<endl;
+    return "user created successfully";
 
 
+}
 
-
-
-#endif
