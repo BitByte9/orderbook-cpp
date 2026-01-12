@@ -99,3 +99,127 @@ string OrderBook:: makeUser(string name)
 
 }
 
+string OrderBook:: add_bid(string user_name,int price,int quan)
+{
+    int remQty=quan;
+
+    //sort in ascendign order
+    stable_sort(asks.begin(),asks.end(), [](const order &a , const order &b){
+        if(a.price==b.price)
+        return a.insertion_ask_id < b.insertion_ask_id ;
+        else
+        {
+            return a.price<b.price;
+
+        }
+
+    });
+
+    //use logic to make than add the bid
+    for(auto it= asks.begin();  it != asks.end();  )
+    {
+        if(remQty > 0 && price >= it->price)
+        {
+            if(remQty < it->quantity)
+            {
+                it->quantity-=remQty;
+
+                flipBalance(user_name,it->user_name,price,remQty);
+
+                cout<<"Bid satisfied at price"<<" "<<it->price<<" "<< "and quantity: "<<remQty<<endl;
+                break ;
+            }
+            else
+            {
+                remQty -= it->quantity;
+                flipBalance(user_name, it->user_name, it->quantity, it->price);
+                cout << "Bid Satisfied Partially at price: " << it->price << " and quantity: " << it->quantity << endl;
+                it = asks.erase(it); // get the next valid iterator after erasing
+
+            }
+
+        }
+        else
+        {
+            it++;
+        }
+        
+
+    }
+    if(remQty>0)
+    {
+        order bid(user_name,"bid",price,remQty);
+        bids.push_back(bid);
+        cout<<"Remaining Quantity of the bid added to orderbook "<<endl;
+
+    }
+    if(remQty==0)
+    {
+        cout<<"complete bid satisfied successfully"<<endl;
+
+    }
+
+    return"Bid added/satisfied successfully";
+
+}
+
+string OrderBook::add_ask(string Username, int Price, int Quantity)
+{
+    
+    int remQty=Quantity;
+    
+    stable_sort(bids.begin(), bids.end(), [](const order &a, const order &b) {
+   
+    if (a.price==b.price) {
+        
+        return a.insertion_bid_id<b.insertion_bid_id;
+    }
+
+    return a.price>b.price;
+});
+
+    // use logic from the commented function above
+    for(auto it=bids.begin();it!=bids.end(); )
+    {
+        if (remQty>0 && Price<=it->price)
+        {
+            if (it->quantity> remQty)
+            {
+                it->quantity-=remQty;
+                flipBalance(it->user_name,Username, remQty,it->price);
+                cout<<"Ask Satisfied Successfully at price: "<<it->price<<" and quantity: " << remQty << endl;
+                remQty=0;
+                break;
+            }
+            else
+            {
+                remQty-=it->quantity;
+                flipBalance(it->user_name, Username, it->quantity, it->price);
+                cout<<"Ask Satisfied Partially at price: " << it->price << " and quantity: " << it->quantity << endl;
+                it=bids.erase(it); 
+            }
+        }
+        else
+        {
+            it++; 
+        }
+    }
+
+    if(remQty>0)
+    {
+        order ask(Username,"ask",Price,remQty);
+        asks.push_back(ask);
+        cout <<"Remaining quantity of asks added to Orderbook"<< endl;
+    }
+
+    if(remQty==0)
+    {
+        cout<<"Complete Ask Satisfied Successfully"<<endl;
+    }
+    return "Ask added successfully."; 
+}
+
+
+
+
+
